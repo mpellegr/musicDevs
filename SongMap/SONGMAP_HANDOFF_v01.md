@@ -25,7 +25,7 @@ Reducir discusiones y ambigüedades en el ensayo sobre la estructura de las canc
 - Especificar duraciones en compases y tiempos adicionales, para cambios dentro de un compás.
 - Visualizar las partes y tónicas sobre una línea de tiempo con divisiones por compás, zoom y ajuste al ancho.
 - Mostrar una **lista vertical «Orden de las partes»** con compás de inicio, nombre, duración y bloques de notas coloreados.
-- Deshacer/rehacer cambios, persistencia local mediante `localStorage`, exportación/importación JSON, impresión y copia de resumen textual.
+- Deshacer/rehacer cambios, persistencia local mediante `localStorage`, exportación/importación JSON, impresión/PDF y PNG para descargar o compartir.
 - Interfaz adaptable a pantallas pequeñas.
 
 ## Decisión visual fundamental — última corrección (v00_02)
@@ -99,7 +99,10 @@ En 4/4, este ejemplo suma 8 compases: A durante 6 y C# durante 2. Los identifica
 - `renderEditor()`: controles de edición de partes y tónicas.
 - `resizePart()`: ajuste de duración de parte.
 - `save()` / `load()`: persistencia en `localStorage` (clave `songmap_v1_2026`).
-- `printMarkup()` / `plainSummary()`: salida para imprimir o compartir.
+- `exportComposition()`: composición vectorial compartida para las exportaciones claras y oscuras.
+- `printMarkup()`: PDF claro con timeline y lista de partes.
+- `pngMarkup()` / `createPng()`: PNG oscuro 9:16.
+- `openPng()` / `sharePng()` / `closePng()`: vista previa, compartir y liberación de recursos.
 
 ## Alcance y siguientes posibilidades (no implementadas)
 
@@ -160,7 +163,7 @@ El contenedor `order-map` está oculto mediante `hidden` en el HTML. El código 
 - En **TÓNICA de la timeline**, solo se muestra la nota cuando hay espacio; no se muestra una caja ni texto de duración. La duración sigue disponible en la ayuda al pasar el cursor y en la etiqueta accesible.
 - En **STAT**, el total de compases se presenta como número destacado sin caja, junto a la etiqueta «compases».
 - La lista «Orden de las partes» y el resumen del editor mantienen las cajas de duración. La impresión usa una composición vectorial específica, descrita en la sección de impresión de esta revisión.
-- Las ayudas y el resumen copiado usan texto como `08 comp. + 2 t.`. Los corchetes del resumen copiado identifican el compás de entrada, no la duración.
+- Las ayudas usan texto como `08 comp. + 2 t.`. La opción de copiar resumen se ha retirado en favor de PDF y PNG.
 
 ### Legibilidad del CSS
 
@@ -172,13 +175,41 @@ Se ha revisado el diff y ejecutado `git diff --check`. La escala proporcional de
 
 ## Impresión del orden de partes — 8 de noviembre de 2026
 
-- `printMarkup()` genera un SVG con título, BPM, métrica, duración total, lista de partes y leyenda de colores. Sustituye la tabla de impresión anterior.
+- `printMarkup()` genera un SVG con título, BPM, métrica, duración total, timeline y lista de partes. Sustituye la tabla de impresión anterior.
 - Cada fila muestra número de orden, compás de entrada, nombre, indicaciones opcionales, duración total y bloques de tónica. Dentro de cada bloque aparecen la nota y su duración en una caja sin corchetes, con al menos dos dígitos.
 - Las notas comparten una escala de 16 unidades por compás en todas las filas; no se normaliza cada fila por separado. El área vectorial crece según la parte más larga, sin cortar bloques.
-- La composición conserva filas oscuras y notas con la paleta fija del editor. La hoja es blanca para facilitar la impresión.
+- El PDF usa filas blancas y gris claro, texto oscuro y la paleta fija de tónicas. No incluye fondos oscuros.
 - CSS configura A4 vertical con márgenes de 10 mm. El SVG ocupa un área de 190 × 276 mm y escala toda la composición uniformemente dentro de ella, sin fragmentarla en varias páginas.
 - La impresión se actualiza con el botón y con el evento `beforeprint`, por lo que también funciona con el comando de impresión del navegador.
-- Para exportar se utiliza «Imprimir → Guardar como PDF». No se ha añadido exportación PNG.
+- Para exportar el PDF se utiliza «PDF / Imprimir → Guardar como PDF». El PNG tiene un flujo independiente.
 - Ajustar todo a una hoja implica reducir el tamaño de lectura cuando hay muchas partes o duraciones excepcionalmente largas. Las opciones de papel, escala y márgenes que fuerce el usuario en el diálogo del navegador pueden alterar la salida.
 
 Validación: Chrome en modo headless ha generado un PDF de una página con la canción de ejemplo y otro de una página con 250 partes. Se ha validado el XML del SVG generado y revisado una captura de la composición de impresión. `git diff --check` sin errores.
+
+## Exportaciones y limpieza de interfaz — 8 de noviembre de 2026
+
+### PNG para móvil y para compartir
+
+- Botón «PNG / Compartir»: genera una imagen opaca de 1080 × 1920 px (9:16), fondo oscuro, título y datos de la canción seguidos del orden de las partes. No incluye timeline.
+- La escala de los bloques de notas es común entre filas; se mantienen las duraciones en sus cajas. Toda la composición se adapta dentro de la imagen sin recortarse. Con canciones muy extensas, el texto se reduce.
+- Una vista previa permite descargar o compartir el archivo. La imagen se prepara antes del clic en «Compartir…» para conservar la activación de usuario requerida por Web Share.
+- Se comprueba `navigator.canShare({files})` antes de habilitar compartir. El usuario elige WhatsApp entre las aplicaciones que ofrezca el dispositivo. No hay envío automático ni una selección forzada de WhatsApp.
+- En navegadores sin soporte para compartir archivos, se ofrece descargar el PNG para adjuntarlo manualmente desde WhatsApp o WhatsApp Web. El soporte nativo depende del navegador, contexto seguro y aplicaciones instaladas.
+- La generación usa SVG y canvas sin bibliotecas externas. Al cerrar se liberan los object URLs; Escape y el clic fuera cierran la vista previa, y el foco se mantiene entre sus controles.
+
+### PDF claro
+
+- A4 vertical de una sola página, con timeline antes de «Orden de las partes».
+- Fondo blanco, filas blancas/gris claro, texto oscuro y cajas de duración claras. Se conservan los colores de las notas.
+- La timeline incluye la numeración de compases, partes con su duración y tónicas. El orden de partes mantiene los nombres completos divididos en líneas y las indicaciones opcionales.
+- Continúa el ajuste vectorial a una hoja; no depende del zoom ni del desplazamiento de la timeline del editor.
+
+### Interfaz
+
+- Se retiran las leyendas de siete colores y del sostenido tanto de la interfaz como de las exportaciones. La paleta y la edición de sostenidos se conservan.
+- Se retiran el botón de copiar resumen y su código.
+- El texto «Inicio en compás 1…» se sustituye por un CONSEJO con el estilo del antiguo pie. El contenido queda en `#context-tip`; por ahora es estático y los consejos según la sección activa se decidirán más adelante.
+
+### Validación
+
+Chrome ha generado un PNG válido con dimensiones 1080 × 1920 y un PDF de una página. Se han revisado capturas de ambas composiciones. Se han comprobado en el navegador la descarga disponible sin Web Share, el envío de un archivo PNG mediante una implementación simulada de Web Share, la cancelación y la liberación de recursos al cerrar. El selector real de aplicaciones y el envío a WhatsApp requieren probarse en un dispositivo con esa integración; no se ha enviado ningún archivo a terceros.

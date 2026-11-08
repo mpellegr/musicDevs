@@ -326,9 +326,11 @@ button:disabled {
 }
 
 .stats-note {
-  color: #768496;
-  font-size: 11px;
+  color: #a8b5c5;
+  font-size: 12px;
+  line-height: 1.5;
   margin-left: auto;
+  max-width: 410px;
 }
 
 /* Timeline: cabecera y zoom */
@@ -631,46 +633,6 @@ button:disabled {
   z-index: 4;
 }
 
-/* Ayuda y leyenda de colores */
-.timeline-help {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
-  padding: 12px 19px;
-  color: #92a0b2;
-  font-size: 11px;
-  flex-wrap: wrap;
-}
-
-.color-legend {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex-wrap: wrap;
-}
-
-.color-legend span {
-  font-size: 10px;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 31px;
-  height: 25px;
-  border-radius: 7px;
-  color: #172331;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: -.02em;
-}
-
-.help-right {
-  white-space: normal;
-}
-
 /* Área de trabajo y lista de partes */
 .workspace {
   margin-top: 21px;
@@ -966,21 +928,6 @@ button:disabled {
   color: #8695a7;
 }
 
-.footer {
-  margin: 25px 2px;
-  color: #7d8b9b;
-  font-size: 12px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.footer b {
-  color: #c3b38a;
-  font-weight: 600;
-}
-
 .inline-label {
   background: #253144;
   border: 1px solid #455267;
@@ -1133,11 +1080,7 @@ button:disabled {
     font-size: 8px;
   }
 
-  .timeline-help {
-    padding: 10px 11px;
-  }
-
-  .part-item {
+.part-item {
     grid-template-columns: 24px minmax(75px,1fr) 55px minmax(0,1.6fr) 10px;
     gap: 4px;
     padding: 9px 5px;
@@ -1284,4 +1227,47 @@ button:disabled {
   pointer-events: none;
   background: repeating-linear-gradient(to right,transparent 0,transparent calc(var(--unit) - 1px),#ffffff20 calc(var(--unit) - 1px),#ffffff20 var(--unit));
   background-size: 100% 100%;
+}
+
+/* Consejo contextual: el contenido podrá variar según la selección. */
+.stats-note b {
+  color: #c3b38a;
+  font-size: 11px;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+/* Vista previa y acciones del PNG para compartir. */
+.png-dialog {
+  max-width: 460px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+
+.png-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.png-dialog h3 {
+  font-size: 17px;
+}
+
+.png-dialog p {
+  margin: 12px 0;
+}
+
+#png-preview {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 50dvh;
+  margin: 0 auto;
+  border-radius: 8px;
+}
+
+#png-preview:not([src]) {
+  display: none;
 }
