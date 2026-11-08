@@ -22,10 +22,13 @@
     <div class="track-surface"><div class="track-legend"><div class="legend-top">COMPÁS</div><div class="legend-section">PARTES</div><div class="legend-note">TÓNICA</div></div><div class="scroll-tracks" id="scroll-tracks"><div class="canvas" id="timeline-canvas"><div class="bar-ruler" id="ruler"></div><div class="track-row part-track" id="section-track"></div><div class="track-row note-track" id="note-track"></div></div></div></div>
   </div>
   <div class="workspace">
-    <div class="card part-list"><div class="listhead"><div><h2>Orden de las partes</h2><p id="list-desc">Cada rectángulo mide según sus compases (misma escala en todas las filas).</p></div><button class="btn primary small" id="btn-add-part">+ Añadir parte</button></div><div id="order-map" hidden></div><div id="section-list" class="section-list"></div></div>
-    <div class="card editor"><div class="editor-head"><div><span class="overline">Editor de parte</span><h2 id="editor-heading">Selecciona una parte</h2><p class="editor-title" id="editor-summary"></p></div><span class="inline-label" id="editor-tag">EDITABLE</span></div><div class="editor-body" id="editor-body"></div></div>
+    <div class="card part-list"><div class="listhead"><div><h2>Orden de las partes</h2><p id="list-desc">Cada rectángulo mide según sus compases (misma escala en todas las filas).</p></div><button class="btn primary small" id="btn-add-part">+ Añadir parte</button></div><div id="order-map" hidden></div><div id="section-list" class="section-list"></div><div class="part-actions"><p class="part-selection">Parte seleccionada: <strong id="selected-part-name"></strong></p><div class="part-action-buttons"><button class="btn small" id="part-edit">Editar parte</button><button class="btn small" id="part-prev">← Mover</button><button class="btn small" id="part-next">Mover →</button><button class="btn small" id="part-duplicate">Duplicar</button><button class="btn small danger" id="part-delete">Eliminar</button></div></div></div>
   </div>
 </div>
+<dialog id="editor-modal" class="card editor" aria-labelledby="editor-heading" aria-describedby="editor-summary">
+  <div class="editor-head"><div><span class="overline">Editor de parte</span><h2 id="editor-heading">Selecciona una parte</h2><p class="editor-title" id="editor-summary"></p></div><div class="editor-navigation"><button type="button" class="btn small" id="editor-prev" title="Parte anterior" aria-label="Editar parte anterior">←</button><button type="button" class="btn small" id="editor-next" title="Parte siguiente" aria-label="Editar parte siguiente">→</button><button type="button" class="btn small" id="editor-close">Cerrar</button></div></div>
+  <div class="editor-body" id="editor-body"></div>
+</dialog>
 <div id="print-view"></div>
 <div class="dialog-backdrop" id="png-dialog" role="dialog" aria-modal="true" aria-labelledby="png-heading" aria-describedby="png-status">
   <div class="dialog png-dialog">

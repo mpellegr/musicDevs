@@ -9,7 +9,7 @@
 - **Versión de referencia:** `Songmap_v01.html`.
 - **Tecnología actual:** HTML, CSS y JavaScript nativos, separados en HTML, CSS y JavaScript; funciona localmente en el navegador, sin backend ni dependencias.
 - **Idioma de la interfaz:** español.
-- **Diseño:** interfaz oscura, con línea de tiempo horizontal, lista vertical de partes y panel de edición.
+- **Diseño:** interfaz oscura, con línea de tiempo horizontal, lista vertical de partes a ancho completo y editor de parte en un modal.
 - **Datos iniciales:** canción de ejemplo editable; no es una transcripción fiel de las capturas de Ableton que inspiraron la interfaz.
 
 ## Objetivo de producto
@@ -213,3 +213,34 @@ Validación: Chrome en modo headless ha generado un PDF de una página con la ca
 ### Validación
 
 Chrome ha generado un PNG válido con dimensiones 1080 × 1920 y un PDF de una página. Se han revisado capturas de ambas composiciones. Se han comprobado en el navegador la descarga disponible sin Web Share, el envío de un archivo PNG mediante una implementación simulada de Web Share, la cancelación y la liberación de recursos al cerrar. El selector real de aplicaciones y el envío a WhatsApp requieren probarse en un dispositivo con esa integración; no se ha enviado ningún archivo a terceros.
+
+## Reordenar notas en el editor
+
+Cada fila de tónica incluye botones ↑ y ↓ para moverla dentro de la parte. El primero deshabilita subir y el último deshabilita bajar; si solo hay una nota, ambos están deshabilitados. Los cuatro botones (subir, bajar, añadir y eliminar) se organizan en una sola línea, con campos y controles más compactos en móvil.
+
+`moveNote()` cambia el orden conservando identificador, nota y duración, selecciona la nota movida y mantiene el foco en sus controles. Usa `mutate()` para actualizar timeline, lista, exportaciones, almacenamiento y deshacer/rehacer. Los intentos fuera de los límites no generan cambios ni historial.
+
+### Arrastre de notas con ratón
+
+El índice de cada nota es un asa con indicador ⠿. `attachNoteDragging()` permite arrastrarla antes o después de otra fila; una línea marca el punto de inserción. Se usa el arrastre nativo del navegador, con las flechas como alternativa para dispositivos táctiles. Solo se arrastra desde el asa para conservar la edición normal de los campos.
+
+Soltar en la misma posición o cancelar no crea historial. El cambio se aplica mediante `moveNote()`, conservando duración, persistencia y deshacer/rehacer. Tras soltar se devuelve el foco al asa de la nota movida.
+
+## Editor modal y acciones en la lista de partes
+
+- «Orden de las partes» ocupa todo el ancho del área de trabajo. Se retiran los límites de altura de la lista para que crezca con su contenido.
+- Pulsar una parte en la lista o la timeline abre su editor en un `<dialog>` nativo. Pulsar una tónica abre el mismo modal y enfoca el selector de esa nota. Añadir una parte también abre su editor.
+- El modal tiene cabecera con botón Cerrar y cuerpo desplazable cuando sus campos no caben en pantalla. El diálogo nativo mantiene el foco dentro del editor y bloquea la interacción con el fondo. Se puede cerrar con Cerrar, Escape o pulsando fuera.
+- Al cerrar se confirma el campo activo y se devuelve el foco al control de origen o a la parte seleccionada. La edición sigue guardándose automáticamente mediante el flujo habitual, sin botón Guardar.
+- Mover anterior/siguiente, Duplicar y Eliminar pasan al pie de «Orden de las partes», junto a la indicación de parte seleccionada y un botón Editar parte. Actúan sobre la selección y no abren el modal; Eliminar conserva la confirmación.
+- Se mantienen las protecciones para la primera/última parte y para no eliminar la única parte. Reordenar notas con asa o flechas y deshacer/rehacer siguen disponibles dentro del modal.
+
+Validación en Chrome: apertura desde lista y tónica, cierre y confirmación del campo activo, selección visible, mover/duplicar/eliminar desde el pie, Escape, añadir parte, reordenar notas y deshacer. Se ha revisado una captura del modal y comprobado que el editor no presenta desbordamiento horizontal en las ventanas de prueba.
+
+### Ancho y navegación del modal
+
+El modal iguala el ancho exterior de la timeline y de «Orden de las partes». `fitEditorWidth()` mide la timeline después de abrir el diálogo y vuelve a ajustar su ancho al redimensionar la ventana.
+
+Antes de Cerrar se muestran ← y → para navegar a la parte anterior/siguiente sin cerrar el modal. `navigateEditor()` confirma los campos pendientes, cambia la selección y restablece el desplazamiento del cuerpo; no reordena las partes ni genera historial por navegar. Las flechas se deshabilitan en los extremos y ambas si solo hay una parte.
+
+Los campos Nota / Compases / + Tiempos reservan espacio para los cuatro botones de cada nota en una sola línea. La disposición se compacta en pantallas pequeñas. Verificado en Chrome el ancho, la navegación, los campos pendientes, los límites y la alineación sin desbordamiento horizontal, tanto en escritorio como en un viewport de 320 px.

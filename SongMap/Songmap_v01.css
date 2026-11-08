@@ -637,7 +637,7 @@ button:disabled {
 .workspace {
   margin-top: 21px;
   display: grid;
-  grid-template-columns: minmax(0,1.4fr) minmax(360px,1fr);
+  grid-template-columns: minmax(0,1fr);
   gap: 18px;
   align-items: start;
 }
@@ -667,7 +667,6 @@ button:disabled {
 
 .section-list {
   padding: 0 10px 13px;
-  max-height: 490px;
   overflow: auto;
   scrollbar-color: #46586e transparent;
 }
@@ -746,7 +745,11 @@ button:disabled {
 /* Editor de partes y cambios de tónica */
 .editor {
   overflow: hidden;
-  min-height: 395px;
+  width: calc(100vw - 32px);
+  max-width: none;
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  color: var(--text);
 }
 
 .editor-head {
@@ -795,7 +798,7 @@ button:disabled {
 
 .note-header {
   display: grid;
-  grid-template-columns: 24px minmax(95px,1fr) minmax(66px,.7fr) minmax(66px,.7fr) 76px;
+  grid-template-columns: 24px minmax(95px,1fr) minmax(66px,.5fr) minmax(66px,.5fr) 136px;
   align-items: center;
   gap: 6px;
   font-size: 10px;
@@ -806,7 +809,7 @@ button:disabled {
 
 .note-editor-row {
   display: grid;
-  grid-template-columns: 24px minmax(95px,1fr) minmax(66px,.7fr) minmax(66px,.7fr) 76px;
+  grid-template-columns: 24px minmax(95px,1fr) minmax(66px,.5fr) minmax(66px,.5fr) 136px;
   align-items: center;
   gap: 6px;
   margin-bottom: 7px;
@@ -872,7 +875,8 @@ button:disabled {
 }
 
 .note-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 31px);
   gap: 4px;
   justify-content: flex-end;
 }
@@ -886,11 +890,11 @@ button:disabled {
   border-radius: 7px;
 }
 
-.note-actions button:hover {
+.note-actions button:hover:not(:disabled) {
   background: #35455b;
 }
 
-.note-actions .delete:hover {
+.note-actions .delete:hover:not(:disabled) {
   background: #713d47;
 }
 
@@ -908,7 +912,7 @@ button:disabled {
   background: #263345;
 }
 
-.editor-actions {
+.part-action-buttons {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -1014,11 +1018,7 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
-  .section-list {
-    max-height: 330px;
-  }
-
-  .settings {
+.settings {
     grid-template-columns: minmax(230px,2fr) 1fr 1fr 1fr;
   }
 
@@ -1096,8 +1096,12 @@ button:disabled {
   }
 
   .note-editor-row,.note-header {
-    grid-template-columns: 16px minmax(76px,1fr) minmax(50px,.7fr) minmax(50px,.7fr) 68px;
+    grid-template-columns: 16px minmax(66px,1fr) minmax(38px,.5fr) minmax(38px,.5fr) 124px;
     gap: 4px;
+  }
+
+  .note-actions {
+    grid-template-columns: repeat(4, 28px);
   }
 
   .note-actions button {
@@ -1270,4 +1274,127 @@ button:disabled {
 
 #png-preview:not([src]) {
   display: none;
+}
+
+/* Asa de arrastre; las flechas siguen disponibles en pantallas táctiles. */
+.note-drag {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8796a8;
+  cursor: grab;
+}
+
+.note-drag span {
+  display: block;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.note-drag:active {
+  cursor: grabbing;
+}
+
+.note-dragging {
+  opacity: .45;
+}
+
+.note-drop-before {
+  box-shadow: 0 -2px 0 var(--accent);
+}
+
+.note-drop-after {
+  box-shadow: 0 2px 0 var(--accent);
+}
+
+/* Editor modal sobre la lista de partes a ancho completo. */
+.editor[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.editor::backdrop {
+  background: #000a;
+}
+
+body:has(#editor-modal[open]) {
+  overflow: hidden;
+}
+
+.editor .editor-head {
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--line);
+}
+
+.editor .editor-body {
+  overflow-y: auto;
+  min-height: 0;
+  padding-top: 4px;
+}
+
+.part-actions {
+  padding: 0 20px 20px;
+}
+
+.part-selection {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0;
+}
+
+.part-selection strong {
+  color: var(--text);
+}
+
+@media (max-width: 380px) {
+  .editor .note-editor-row,
+  .editor .note-header {
+    grid-template-columns: 14px minmax(60px,1fr) minmax(30px,.5fr) minmax(30px,.5fr) 104px;
+    gap: 3px;
+  }
+
+  .editor .note-header {
+    font-size: 9px;
+    letter-spacing: 0;
+  }
+}
+
+.editor-navigation {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.editor-head > div:first-child {
+  min-width: 0;
+}
+
+.editor-head h2 {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 650px) {
+  .editor .note-header {
+    font-size: 9px;
+    letter-spacing: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .editor .note-actions {
+    grid-template-columns: repeat(4, 23px);
+  }
+
+  .editor .note-actions button {
+    width: 23px;
+    padding: 0;
+  }
+
+  .editor .tone-editor-num {
+    padding-left: 1px;
+    padding-right: 1px;
+  }
 }

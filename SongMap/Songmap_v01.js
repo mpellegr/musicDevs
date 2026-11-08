@@ -52,21 +52,130 @@ let pos=0;state.sections.forEach((section,index)=>{let duration=sectionBeats(sec
 section.notes.forEach(note=>{let nwidth=note.beats/state.numerator*px;let ne=document.createElement('button');ne.className='tone-block'+(selectedNoteId===note.id?' selected':'')+(nwidth<32?' too-small':'');ne.type='button';ne.style.left=(noteOffset/state.numerator*px)+'px';ne.style.width=Math.max(nwidth,1)+'px';ne.style.background=pitchColor(note.pitch);ne.title=`${section.name} · ${note.pitch} · ${readableDuration(note.beats)} · desde compás ${1+noteOffset/state.numerator}`;ne.setAttribute('aria-label',ne.title);ne.innerHTML=(nwidth>19?`<span class="pitch">${note.pitch}</span>`:'');ne.onclick=()=>selectPart(section.id,note.id);nt.appendChild(ne);noteOffset+=note.beats});pos+=duration});
 }
 function renderList(){let html='',offset=0;const totalBars=songBeats()/state.numerator;const unit=Math.max(10,Math.min(30,760/Math.max(totalBars,1)));const map=el('order-map');map.style.width=Math.max(100,totalBars*unit)+'%';map.style.width=Math.max(760,totalBars*unit)+'px';map.replaceChildren();state.sections.forEach((s,i)=>{let total=sectionBeats(s);const block=document.createElement('button');block.type='button';block.className='order-part'+(s.id===selectedPartId?' active':'');block.style.flex=`${total} 0 0`;block.style.flexBasis=(total/state.numerator*unit)+'px';block.style.setProperty('--unit',unit+'px');block.title=`${s.name} · ${readableDuration(total)} · desde compás ${Math.floor(offset/state.numerator)+1}`;block.innerHTML=`<span class="order-part-name">${htmlSafe(s.name)}</span>${durationMarkup(total,'order-part-bars')}<span class="order-part-tones">${s.notes.map(n=>`<i style="flex:${n.beats};background:${pitchColor(n.pitch)}"></i>`).join('')}</span>`;block.onclick=()=>selectPart(s.id);map.appendChild(block);html+=`<button type="button" class="part-item ${s.id===selectedPartId?'active':''}" data-part="${s.id}"><span class="item-index">${String(i+1).padStart(2,'0')}<span style="display:block;opacity:.65">${Math.floor(offset/state.numerator)+1}</span></span><span class="item-label" title="${htmlSafe(s.name)}">${htmlSafe(s.name)}</span>${durationMarkup(total,'item-bars')}<span class="item-notes">${s.notes.map(no=>`<span class="item-note" style="background:${pitchColor(no.pitch)};flex:0 0 ${no.beats/state.numerator*16}px" title="${no.pitch} · ${readableDuration(no.beats)}">${htmlSafe(no.pitch)}</span>`).join('')}</span><span class="item-chevron">›</span></button>`;offset+=total});el('section-list').innerHTML=html;el('section-list').querySelectorAll('[data-part]').forEach(x=>x.addEventListener('click',()=>selectPart(x.dataset.part)));
-el('list-desc').textContent='Número pequeño: compás de entrada. Pulsar para editar.'}
-function renderEditor(){const s=getSection(),i=state.sections.indexOf(s);el('editor-heading').textContent=s.name;el('editor-summary').innerHTML=`Parte ${i+1} de ${state.sections.length} · ${durationMarkup(sectionBeats(s))}`;const rows=s.notes.map((t,j)=>{let base=t.pitch.replace('#',''),sharp=t.pitch.endsWith('#'),bar=Math.floor(t.beats/state.numerator),rest=t.beats%state.numerator;return `<div class="note-editor-row" data-note="${t.id}"><span class="tone-index">${String(j+1).padStart(2,'0')}</span><div class="pitch-choice" style="border-left:4px solid ${pitchColor(t.pitch)}"><select aria-label="Nota tónica ${j+1}" data-action="pitch" data-note="${t.id}">${ROOTS.map(x=>`<option value="${x}" ${x===base?'selected':''}>${x}</option>`).join('')}</select><button type="button" class="sharp-toggle ${sharp?'active':''}" data-action="sharp" data-note="${t.id}" title="Alternar sostenido #" aria-label="Sostenido de nota ${j+1}">#</button></div><input class="tone-editor-num" type="number" step="1" min="0" max="256" value="${bar}" aria-label="Compases de nota ${j+1}" data-action="bars" data-note="${t.id}"><input class="tone-editor-num" type="number" step="1" min="0" max="${state.numerator-1}" value="${rest}" aria-label="Tiempos adicionales nota ${j+1}" data-action="remainder" data-note="${t.id}"><div class="note-actions"><button type="button" data-action="insert" data-note="${t.id}" title="Añadir una nota después">+</button><button type="button" class="delete" data-action="remove" data-note="${t.id}" title="Eliminar esta nota" ${s.notes.length===1?'disabled':''}>×</button></div></div>`}).join('');
-el('editor-body').innerHTML=`<div class="editor-fields"><div class="field"><label for="part-name">Nombre de parte</label><input id="part-name" type="text" maxlength="90" value="${htmlSafe(s.name)}" autocomplete="off"></div><div class="field"><label for="part-bars">Compases totales</label><input id="part-bars" type="number" min="1" max="512" step="1" value="${Math.ceil(sectionBeats(s)/state.numerator)}" title="Cambiar duración: recorta o extiende el final de la parte"></div></div><div class="field" style="margin-top:10px"><label for="part-detail">Notas / indicaciones (opcional)</label><input id="part-detail" type="text" maxlength="300" placeholder="Ej.: verso corto, primera nota 6 compases..." value="${htmlSafe(s.detail)}"></div><p class="mini-hint">Cambios de nota dentro de la parte · <b>${s.notes.length}</b> bloques</p><div class="note-header"><span></span><span>NOTA</span><span>COMPASES</span><span>+ TIEMPOS</span><span></span></div><div id="note-edit-list">${rows}</div><button class="addtone" id="btn-add-tone">+ Añadir cambio de nota (1 compás)</button><div id="part-warning" class="message" style="${sectionBeats(s)%state.numerator?'':'display:none'}">Esta parte termina a mitad de compás (${sectionBeats(s)%state.numerator} tiempos adicionales). Comprueba si es intencionado.</div><div class="editor-actions"><button class="btn small" id="part-prev" ${i===0?'disabled':''}>← Mover</button><button class="btn small" id="part-next" ${i===state.sections.length-1?'disabled':''}>Mover →</button><button class="btn small" id="part-duplicate">Duplicar</button><button class="btn small danger" id="part-delete" ${state.sections.length===1?'disabled':''}>Eliminar</button></div><p class="helper" style="margin-bottom:0">Las duraciones de cada nota determinan la duración total de la parte. “+ tiempos” permite cambios dentro de un compás.</p>`;
+el('list-desc').textContent='Número pequeño: compás de entrada. Pulsa una parte para abrir su editor.';renderPartActions()}
+function renderPartActions(){
+  const index=state.sections.findIndex(s=>s.id===selectedPartId);
+  el('selected-part-name').textContent=getSection().name;
+  el('part-prev').disabled=index<=0;
+  el('part-next').disabled=index===state.sections.length-1;
+  el('part-delete').disabled=state.sections.length<=1;
+}
+let editorReturnId=null;
+function openEditor(){
+  const modal=el('editor-modal');
+  if(!modal.open){editorReturnId=document.activeElement?.id||null;modal.showModal()}
+  fitEditorWidth();
+  if(selectedNoteId){
+    el('note-edit-list').querySelector(`[data-action="pitch"][data-note="${selectedNoteId}"]`)?.focus();
+  }else el('part-name').focus({preventScroll:true});
+}
+function fitEditorWidth(){
+  el('editor-modal').style.width=document.querySelector('.timeline-card').getBoundingClientRect().width+'px';
+}
+function commitEditorField(){
+  const active=document.activeElement;
+  if(el('editor-modal').contains(active)&&active.matches('input,textarea')&&active.value!==active.defaultValue)active.dispatchEvent(new Event('change',{bubbles:true}));
+  if(el('editor-modal').contains(document.activeElement))document.activeElement.blur();
+}
+function navigateEditor(direction){
+  commitEditorField();
+  const index=state.sections.findIndex(section=>section.id===selectedPartId);
+  const next=state.sections[index+direction];
+  if(!next)return;
+  selectPart(next.id);
+  el('editor-body').scrollTop=0;
+  const button=el(direction<0?'editor-prev':'editor-next');
+  (button.disabled?el(direction<0?'editor-next':'editor-prev'):button).focus({preventScroll:true});
+}
+function closeEditor(){
+  commitEditorField();
+  el('editor-modal').close();
+}
+function deleteSelectedPart(){
+  if(state.sections.length<=1)return;
+  confirmDialog('Eliminar parte',`Se eliminará “${getSection().name}” y sus cambios de tónica.`,()=>{
+    mutate(()=>{
+      const index=state.sections.findIndex(s=>s.id===selectedPartId);
+      state.sections.splice(index,1);
+      selectedPartId=state.sections[Math.max(0,index-1)].id;
+      selectedNoteId=null;
+    });
+    el('part-edit').focus({preventScroll:true});
+  });
+}
+function renderEditor(){const s=getSection(),i=state.sections.indexOf(s);el('editor-prev').disabled=i===0;el('editor-next').disabled=i===state.sections.length-1;el('editor-heading').textContent=s.name;el('editor-summary').innerHTML=`Parte ${i+1} de ${state.sections.length} · ${durationMarkup(sectionBeats(s))}`;const rows=s.notes.map((t,j)=>{let base=t.pitch.replace('#',''),sharp=t.pitch.endsWith('#'),bar=Math.floor(t.beats/state.numerator),rest=t.beats%state.numerator;return `<div class="note-editor-row" data-note="${t.id}"><button type="button" class="tone-index note-drag" draggable="true" data-drag-note="${t.id}" title="Arrastrar para reordenar nota ${j+1}" aria-label="Arrastrar nota ${j+1} para reordenarla">${String(j+1).padStart(2,'0')}<span aria-hidden="true">⠿</span></button><div class="pitch-choice" style="border-left:4px solid ${pitchColor(t.pitch)}"><select aria-label="Nota tónica ${j+1}" data-action="pitch" data-note="${t.id}">${ROOTS.map(x=>`<option value="${x}" ${x===base?'selected':''}>${x}</option>`).join('')}</select><button type="button" class="sharp-toggle ${sharp?'active':''}" data-action="sharp" data-note="${t.id}" title="Alternar sostenido #" aria-label="Sostenido de nota ${j+1}">#</button></div><input class="tone-editor-num" type="number" step="1" min="0" max="256" value="${bar}" aria-label="Compases de nota ${j+1}" data-action="bars" data-note="${t.id}"><input class="tone-editor-num" type="number" step="1" min="0" max="${state.numerator-1}" value="${rest}" aria-label="Tiempos adicionales nota ${j+1}" data-action="remainder" data-note="${t.id}"><div class="note-actions"><button type="button" data-action="up" data-note="${t.id}" title="Mover nota arriba" aria-label="Mover nota ${j+1} arriba" ${j===0?'disabled':''}>↑</button><button type="button" data-action="down" data-note="${t.id}" title="Mover nota abajo" aria-label="Mover nota ${j+1} abajo" ${j===s.notes.length-1?'disabled':''}>↓</button><button type="button" data-action="insert" data-note="${t.id}" title="Añadir una nota después">+</button><button type="button" class="delete" data-action="remove" data-note="${t.id}" title="Eliminar esta nota" ${s.notes.length===1?'disabled':''}>×</button></div></div>`}).join('');
+el('editor-body').innerHTML=`<div class="editor-fields"><div class="field"><label for="part-name">Nombre de parte</label><input id="part-name" type="text" maxlength="90" value="${htmlSafe(s.name)}" autocomplete="off"></div><div class="field"><label for="part-bars">Compases totales</label><input id="part-bars" type="number" min="1" max="512" step="1" value="${Math.ceil(sectionBeats(s)/state.numerator)}" title="Cambiar duración: recorta o extiende el final de la parte"></div></div><div class="field" style="margin-top:10px"><label for="part-detail">Notas / indicaciones (opcional)</label><input id="part-detail" type="text" maxlength="300" placeholder="Ej.: verso corto, primera nota 6 compases..." value="${htmlSafe(s.detail)}"></div><p class="mini-hint">Cambios de nota dentro de la parte · <b>${s.notes.length}</b> bloques</p><div class="note-header"><span></span><span>NOTA</span><span>COMPASES</span><span>+ TIEMPOS</span><span></span></div><div id="note-edit-list">${rows}</div><button class="addtone" id="btn-add-tone">+ Añadir cambio de nota (1 compás)</button><div id="part-warning" class="message" style="${sectionBeats(s)%state.numerator?'':'display:none'}">Esta parte termina a mitad de compás (${sectionBeats(s)%state.numerator} tiempos adicionales). Comprueba si es intencionado.</div><p class="helper" style="margin-bottom:0">Las duraciones de cada nota determinan la duración total de la parte. “+ tiempos” permite cambios dentro de un compás.</p>`;
+attachNoteDragging();
 el('part-name').onchange=e=>{let name=e.target.value.trim()||'PARTE';mutate(()=>{getSection().name=name})};el('part-detail').onchange=e=>{mutate(()=>{getSection().detail=e.target.value.slice(0,300)})};el('part-bars').onchange=e=>{let target=Math.round(Number(e.target.value));if(!Number.isFinite(target)||target<1||target>512){renderEditor();return}mutate(()=>resizePart(getSection(),target*state.numerator))};
-el('note-edit-list').addEventListener('click',e=>{let node=e.target.closest('[data-action]');if(!node)return;let action=node.dataset.action,nid=node.dataset.note;if(action==='sharp'){mutate(()=>{let note=getSection().notes.find(n=>n.id===nid);note.pitch=note.pitch.endsWith('#')?note.pitch.slice(0,-1):note.pitch+'#';selectedNoteId=nid})}else if(action==='insert'){mutate(()=>{let s=getSection(),at=s.notes.findIndex(n=>n.id===nid);let newNote={id:uid(),pitch:s.notes[at].pitch,beats:state.numerator};s.notes.splice(at+1,0,newNote);selectedNoteId=newNote.id})}else if(action==='remove'){if(getSection().notes.length<2)return;mutate(()=>{let s=getSection();s.notes=s.notes.filter(n=>n.id!==nid);selectedNoteId=null})}});
+el('note-edit-list').addEventListener('click',e=>{let node=e.target.closest('[data-action]');if(!node)return;let action=node.dataset.action,nid=node.dataset.note;if(action==='up'||action==='down'){moveNote(nid,action==='up'?-1:1)}else if(action==='sharp'){mutate(()=>{let note=getSection().notes.find(n=>n.id===nid);note.pitch=note.pitch.endsWith('#')?note.pitch.slice(0,-1):note.pitch+'#';selectedNoteId=nid})}else if(action==='insert'){mutate(()=>{let s=getSection(),at=s.notes.findIndex(n=>n.id===nid);let newNote={id:uid(),pitch:s.notes[at].pitch,beats:state.numerator};s.notes.splice(at+1,0,newNote);selectedNoteId=newNote.id})}else if(action==='remove'){if(getSection().notes.length<2)return;mutate(()=>{let s=getSection();s.notes=s.notes.filter(n=>n.id!==nid);selectedNoteId=null})}});
 el('note-edit-list').addEventListener('change',e=>{let node=e.target.closest('[data-action]');if(!node)return;let action=node.dataset.action,nid=node.dataset.note;if(!['pitch','bars','remainder'].includes(action))return;let old=getSection().notes.find(n=>n.id===nid);if(!old)return;if(action==='pitch'){mutate(()=>{old.pitch=node.value+(old.pitch.endsWith('#')?'#':'');selectedNoteId=nid});return}let value=Math.round(Number(node.value));if(!Number.isFinite(value)||value<0){renderEditor();return}let bars=Math.floor(old.beats/state.numerator),remaining=old.beats%state.numerator;if(action==='bars')bars=Math.min(value,256);else remaining=Math.min(value,state.numerator-1);let beats=bars*state.numerator+remaining;if(beats<1||beats>2000){toast('Cada cambio necesita al menos un tiempo y como máximo 2000');renderEditor();return}mutate(()=>{old.beats=beats;selectedNoteId=nid})});
 el('btn-add-tone').onclick=()=>{mutate(()=>{let s=getSection();const last=s.notes[s.notes.length-1];let neo={id:uid(),pitch:last.pitch,beats:state.numerator};s.notes.push(neo);selectedNoteId=neo.id})};
-el('part-prev').onclick=()=>movePart(-1);el('part-next').onclick=()=>movePart(1);el('part-duplicate').onclick=duplicatePart;el('part-delete').onclick=()=>{if(state.sections.length<=1)return;confirmDialog('Eliminar parte',`Se eliminará “${getSection().name}” y sus cambios de tónica.`,()=>{mutate(()=>{let i=state.sections.findIndex(s=>s.id===selectedPartId);state.sections.splice(i,1);selectedPartId=state.sections[Math.max(0,i-1)].id;selectedNoteId=null})})}}
+}
+function attachNoteDragging(){
+  const list=el('note-edit-list');
+  let draggedId=null,dropIndex=null;
+  const clearMarkers=()=>list.querySelectorAll('.note-drop-before,.note-drop-after').forEach(row=>row.classList.remove('note-drop-before','note-drop-after'));
+  const reset=()=>{clearMarkers();list.querySelectorAll('.note-dragging').forEach(row=>row.classList.remove('note-dragging'));draggedId=null;dropIndex=null};
+  list.addEventListener('dragstart',event=>{
+    const handle=event.target.closest('[data-drag-note]');
+    if(!handle||getSection().notes.length<2){event.preventDefault();return}
+    draggedId=handle.dataset.dragNote;
+    event.dataTransfer.effectAllowed='move';
+    event.dataTransfer.setData('text/plain',draggedId);
+    const row=handle.closest('.note-editor-row');
+    event.dataTransfer.setDragImage(row,12,row.offsetHeight/2);
+    row.classList.add('note-dragging');
+  });
+  list.addEventListener('dragover',event=>{
+    if(!draggedId)return;
+    const row=event.target.closest('.note-editor-row');
+    if(!row)return;
+    event.preventDefault();event.dataTransfer.dropEffect='move';
+    clearMarkers();
+    const notes=getSection().notes,from=notes.findIndex(note=>note.id===draggedId);
+    const target=notes.findIndex(note=>note.id===row.dataset.note);
+    const after=event.clientY>row.getBoundingClientRect().top+row.offsetHeight/2;
+    const insertion=target+(after?1:0);
+    dropIndex=insertion-(from<insertion?1:0);
+    if(dropIndex!==from)row.classList.add(after?'note-drop-after':'note-drop-before');
+  });
+  list.addEventListener('drop',event=>{
+    if(!draggedId)return;
+    event.preventDefault();
+    const noteId=draggedId,to=dropIndex;
+    const from=getSection().notes.findIndex(note=>note.id===noteId);
+    reset();
+    if(to===null||from<0||to===from)return;
+    moveNote(noteId,to-from);
+    el('note-edit-list').querySelector(`[data-drag-note="${noteId}"]`)?.focus({preventScroll:true});
+  });
+  list.addEventListener('dragleave',event=>{
+    if(!list.contains(event.relatedTarget)){clearMarkers();dropIndex=null}
+  });
+  list.addEventListener('dragend',reset);
+}
+function moveNote(noteId,direction){
+  const notes=getSection().notes;
+  const from=notes.findIndex(note=>note.id===noteId),to=from+direction;
+  if(from<0||to<0||to>=notes.length)return;
+  mutate(()=>{
+    const [note]=notes.splice(from,1);
+    notes.splice(to,0,note);
+    selectedNoteId=noteId;
+  });
+  const action=direction<0?'up':'down';
+  const button=el('note-edit-list').querySelector(`[data-action="${action}"][data-note="${noteId}"]`);
+  const fallback=el('note-edit-list').querySelector(`[data-action="${direction<0?'down':'up'}"][data-note="${noteId}"]`);
+  (button&&!button.disabled?button:fallback)?.focus({preventScroll:true});
+}
 function resizePart(part,targetBeats){let consumed=0;const result=[];for(let note of part.notes){if(consumed>=targetBeats)break;let left=targetBeats-consumed;let length=Math.min(note.beats,left);result.push({...note,beats:length});consumed+=length}if(consumed<targetBeats){result[result.length-1].beats+=targetBeats-consumed}part.notes=result}
-function movePart(direction){mutate(()=>{let i=state.sections.findIndex(s=>s.id===selectedPartId);let item=state.sections.splice(i,1)[0];state.sections.splice(i+direction,0,item)})}
+function movePart(direction){const index=state.sections.findIndex(s=>s.id===selectedPartId);if(index+direction<0||index+direction>=state.sections.length)return;mutate(()=>{let i=state.sections.findIndex(s=>s.id===selectedPartId);let item=state.sections.splice(i,1)[0];state.sections.splice(i+direction,0,item)})}
 function duplicatePart(){mutate(()=>{let i=state.sections.findIndex(s=>s.id===selectedPartId),old=state.sections[i],copy={id:uid(),name:old.name+' (VAR.)',detail:old.detail,notes:old.notes.map(o=>({...o,id:uid()}))};state.sections.splice(i+1,0,copy);selectedPartId=copy.id;selectedNoteId=null});toast('Parte duplicada: ya puedes crear una variación')}
-function addPart(){mutate(()=>{let i=state.sections.findIndex(s=>s.id===selectedPartId),s={id:uid(),name:'NUEVA PARTE',detail:'',notes:[n('A',4,state.numerator)]};state.sections.splice(i+1,0,s);selectedPartId=s.id;selectedNoteId=null});el('part-name').focus();el('part-name').select()}
-function selectPart(pid,nid=null){selectedPartId=pid;selectedNoteId=nid;renderTimeline();renderList();renderEditor();if(nid){const item=el('editor-body').querySelector(`[data-note="${nid}"]`);if(item&&item.scrollIntoView){ // Only scroll when the selected note editor is outside the viewport.
-const r=item.getBoundingClientRect();if(r.bottom>window.innerHeight-50||r.top<0)item.scrollIntoView({behavior:'smooth',block:'nearest'});
-}}}
+function addPart(){mutate(()=>{let i=state.sections.findIndex(s=>s.id===selectedPartId),s={id:uid(),name:'NUEVA PARTE',detail:'',notes:[n('A',4,state.numerator)]};state.sections.splice(i+1,0,s);selectedPartId=s.id;selectedNoteId=null});openEditor();el('part-name').select()}
+function selectPart(pid,nid=null){
+  selectedPartId=pid;selectedNoteId=nid;
+  renderTimeline();renderList();renderEditor();openEditor();
+}
 function renderAll(){ensureSelection();renderTop();renderTimeline();renderList();renderEditor();el('print-view').innerHTML=printMarkup()}
 function formattedStart(beatOffset){let bar=Math.floor(beatOffset/state.numerator)+1,rem=beatOffset%state.numerator;return `${bar}${rem?' (tiempo '+(rem+1)+')':''}`}
 // Composición compartida: PDF claro con timeline y PNG oscuro para móvil.
@@ -220,8 +329,27 @@ async function sharePng(){
 function downloadBlob(blob,filename){const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
 function safeFilename(name){return name.trim().replace(/[^a-zA-Z0-9À-ÿ_-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,70)||'cancion'}
 function attach(){el('song-title').onchange=e=>mutate(()=>{state.title=e.target.value.trim()||'Sin título'});el('song-bpm').onchange=e=>{let v=Math.round(Number(e.target.value));if(v>=30&&v<=300)mutate(()=>state.bpm=v);else{renderTop();toast('Introduce un tempo entre 30 y 300 BPM')}};el('song-numerator').onchange=e=>{let v=Math.round(Number(e.target.value));if(v>=1&&v<=16){mutate(()=>{state.numerator=v});toast('La duración de las notas se mantiene en tiempos; revisa los compases')}else renderTop()};el('song-denominator').onchange=e=>mutate(()=>{state.denominator=Number(e.target.value)});
-el('zoom').oninput=e=>{zoom=Number(e.target.value);fit=false;renderTimeline()};el('btn-fit').onclick=()=>{fit=!fit;renderTimeline()};window.addEventListener('resize',()=>{if(fit)renderTimeline()});el('btn-undo').onclick=undo;el('btn-add-part').onclick=addPart;el('btn-print').onclick=()=>{el('print-view').innerHTML=printMarkup();window.print()};el('btn-new').onclick=()=>confirmDialog('Crear canción nueva','Se sustituirá la estructura actual. Puedes exportar antes un JSON para recuperarla.',()=>{mutate(()=>{state=fresh();selectedPartId=state.sections[0].id;selectedNoteId=null;fit=false;zoom=46});el('zoom').value=zoom;toast('Canción nueva creada')});
+el('zoom').oninput=e=>{zoom=Number(e.target.value);fit=false;renderTimeline()};el('btn-fit').onclick=()=>{fit=!fit;renderTimeline()};window.addEventListener('resize',()=>{if(fit)renderTimeline();if(el('editor-modal').open)fitEditorWidth()});el('btn-undo').onclick=undo;el('btn-add-part').onclick=addPart;el('btn-print').onclick=()=>{el('print-view').innerHTML=printMarkup();window.print()};el('btn-new').onclick=()=>confirmDialog('Crear canción nueva','Se sustituirá la estructura actual. Puedes exportar antes un JSON para recuperarla.',()=>{mutate(()=>{state=fresh();selectedPartId=state.sections[0].id;selectedNoteId=null;fit=false;zoom=46});el('zoom').value=zoom;toast('Canción nueva creada')});
 el('btn-export').onclick=()=>{const data=JSON.stringify(state,null,2);downloadBlob(new Blob([data],{type:'application/json;charset=utf-8'}),safeFilename(state.title)+'_mapa.json');toast('Archivo JSON guardado')};el('btn-import').onclick=()=>el('import-file').click();el('import-file').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{let data=validState(JSON.parse(await file.text()));mutate(()=>{state=data;selectedPartId=state.sections[0].id;selectedNoteId=null});toast('Canción cargada')}catch(err){toast('Error: '+err.message)}e.target.value=''};
+el('part-edit').onclick=openEditor;
+el('part-prev').onclick=()=>movePart(-1);
+el('part-next').onclick=()=>movePart(1);
+el('part-duplicate').onclick=duplicatePart;
+el('part-delete').onclick=deleteSelectedPart;
+el('editor-close').onclick=closeEditor;
+el('editor-prev').onclick=()=>navigateEditor(-1);
+el('editor-next').onclick=()=>navigateEditor(1);
+el('editor-modal').addEventListener('cancel',event=>{event.preventDefault();closeEditor()});
+el('editor-modal').addEventListener('close',()=>{
+  const target=editorReturnId?document.getElementById(editorReturnId):null;
+  const fallback=el('section-list').querySelector(`[data-part="${selectedPartId}"]`);
+  (target||fallback||el('part-edit')).focus({preventScroll:true});
+});
+el('editor-modal').addEventListener('click',event=>{
+  if(event.target!==el('editor-modal'))return;
+  const bounds=event.target.getBoundingClientRect();
+  if(event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top||event.clientY>bounds.bottom)closeEditor();
+});
 el('btn-png').onclick=openPng;
 el('png-close').onclick=closePng;
 el('png-dialog').onclick=e=>{if(e.target===el('png-dialog'))closePng()};
@@ -234,7 +362,7 @@ el('png-dialog').addEventListener('keydown',e=>{
   if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
   else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
 });
-document.addEventListener('keydown',e=>{let ctrl=e.ctrlKey||e.metaKey;if(ctrl&&e.key.toLowerCase()==='z'&&!e.altKey){const tag=document.activeElement?.tagName;if(['INPUT','TEXTAREA'].includes(tag))return;e.preventDefault();e.shiftKey?redo():undo()}if(e.key==='Escape'){if(el('png-dialog').classList.contains('open'))closePng();else closeDialog()}});}
+document.addEventListener('keydown',e=>{let ctrl=e.ctrlKey||e.metaKey;if(ctrl&&e.key.toLowerCase()==='z'&&!e.altKey){const tag=document.activeElement?.tagName;if(['INPUT','TEXTAREA'].includes(tag))return;e.preventDefault();e.shiftKey?redo():undo()}if(e.key==='Escape'){if(el('editor-modal').open){e.preventDefault();closeEditor()}else if(el('png-dialog').classList.contains('open'))closePng();else closeDialog()}});}
 window.addEventListener('beforeprint',()=>{el('print-view').innerHTML=printMarkup()});
 attach();renderAll();
 })();
