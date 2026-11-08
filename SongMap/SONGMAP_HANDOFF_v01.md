@@ -18,13 +18,13 @@ Reducir discusiones y ambigüedades en el ensayo sobre la estructura de las canc
 
 ## Funciones implementadas
 
-- Editar título, BPM y métrica (numerador y denominador).
+- Editar título, artista, BPM y métrica (numerador y denominador).
 - Crear, seleccionar, renombrar, mover, duplicar y eliminar partes de la canción.
 - Editar la duración total de una parte; el programa ajusta los bloques de notas al nuevo total.
 - Añadir, eliminar y editar cambios de tónica dentro de cada parte.
 - Especificar duraciones en compases y tiempos adicionales, para cambios dentro de un compás.
 - Visualizar las partes y tónicas sobre una línea de tiempo con divisiones por compás, zoom y ajuste al ancho.
-- Mostrar una **lista vertical «Orden de las partes»** con compás de inicio, nombre, duración y bloques de notas coloreados.
+- Mostrar una **lista vertical «Orden de las partes»** con número de parte, asa de arrastre, nombre, duración y bloques de notas coloreados.
 - Deshacer/rehacer cambios, persistencia local mediante `localStorage`, exportación/importación JSON, impresión/PDF y PNG para descargar o compartir.
 - Interfaz adaptable a pantallas pequeñas.
 
@@ -58,12 +58,13 @@ Son **7 notas, 7 colores**. Las notas con `#` mantienen el color de su nota natu
 
 ## Modelo de datos actual
 
-El estado principal contiene `version`, `title`, `bpm`, `numerator`, `denominator` y `sections`. Cada sección contiene `id`, `name`, `detail` y `notes`. Cada nota contiene `id`, `pitch` (p. ej. `A`, `C#`) y `beats` (duración en tiempos de la métrica actual).
+El estado principal contiene `version`, `title`, `artist`, `bpm`, `numerator`, `denominator` y `sections`. El campo opcional `artist` se normaliza a una cadena vacía al importar JSON anteriores. Cada sección contiene `id`, `name`, `detail` y `notes`. Cada nota contiene `id`, `pitch` (p. ej. `A`, `C#`) y `beats` (duración en tiempos de la métrica actual).
 
 ```json
 {
   "version": 1,
   "title": "Mi canción",
+  "artist": "Mi banda",
   "bpm": 125,
   "numerator": 4,
   "denominator": 4,
@@ -229,8 +230,8 @@ Soltar en la misma posición o cancelar no crea historial. El cambio se aplica m
 ## Editor modal y acciones en la lista de partes
 
 - «Orden de las partes» ocupa todo el ancho del área de trabajo. Se retiran los límites de altura de la lista para que crezca con su contenido.
-- Pulsar una parte en la lista o la timeline abre su editor en un `<dialog>` nativo. Pulsar una tónica abre el mismo modal y enfoca el selector de esa nota. Añadir una parte también abre su editor.
-- El modal tiene cabecera con botón Cerrar y cuerpo desplazable cuando sus campos no caben en pantalla. El diálogo nativo mantiene el foco dentro del editor y bloquea la interacción con el fondo. Se puede cerrar con Cerrar, Escape o pulsando fuera.
+- Un clic en una parte o tónica selecciona; el doble clic abre el editor dentro de «Orden de las partes». Si ya está abierto, el clic cambia su contenido. Editar parte y Añadir parte permiten abrirlo directamente, también en móvil.
+- El editor tiene cabecera con navegación y botón × destacado. Se usa un `<dialog>` no bloqueante contenido en la tarjeta de partes; puede crecer hacia abajo y la timeline sigue siendo interactiva. Se cierra con × o Escape.
 - Al cerrar se confirma el campo activo y se devuelve el foco al control de origen o a la parte seleccionada. La edición sigue guardándose automáticamente mediante el flujo habitual, sin botón Guardar.
 - Mover anterior/siguiente, Duplicar y Eliminar pasan al pie de «Orden de las partes», junto a la indicación de parte seleccionada y un botón Editar parte. Actúan sobre la selección y no abren el modal; Eliminar conserva la confirmación.
 - Se mantienen las protecciones para la primera/última parte y para no eliminar la única parte. Reordenar notas con asa o flechas y deshacer/rehacer siguen disponibles dentro del modal.
@@ -239,8 +240,51 @@ Validación en Chrome: apertura desde lista y tónica, cierre y confirmación de
 
 ### Ancho y navegación del modal
 
-El modal iguala el ancho exterior de la timeline y de «Orden de las partes». `fitEditorWidth()` mide la timeline después de abrir el diálogo y vuelve a ajustar su ancho al redimensionar la ventana.
+El editor ocupa el ancho interior de «Orden de las partes», con márgenes para distinguirlo de la tarjeta contenedora. Su tamaño responde al ancho de la tarjeta sin mediciones ni posicionamiento fijo.
 
 Antes de Cerrar se muestran ← y → para navegar a la parte anterior/siguiente sin cerrar el modal. `navigateEditor()` confirma los campos pendientes, cambia la selección y restablece el desplazamiento del cuerpo; no reordena las partes ni genera historial por navegar. Las flechas se deshabilitan en los extremos y ambas si solo hay una parte.
 
 Los campos Nota / Compases / + Tiempos reservan espacio para los cuatro botones de cada nota en una sola línea. La disposición se compacta en pantallas pequeñas. Verificado en Chrome el ancho, la navegación, los campos pendientes, los límites y la alineación sin desbordamiento horizontal, tanto en escritorio como en un viewport de 320 px.
+
+## Cabecera, artista, timeline compacta y posición del modal
+
+- La marca muestra `SONGMAP v01.00`. Se retiran el texto comercial de portada y «Mapa de estructura · v01». Los archivos de esta revisión siguen siendo `Songmap_v01.*`; la versión JSON continúa siendo `1`.
+- El campo opcional Artista se limita a 100 caracteres. Se incluye en estado, almacenamiento, deshacer/rehacer, importación y exportación JSON, y en las cabeceras de PNG y PDF. Los JSON antiguos siguen cargando con `artist: ""`.
+- `exportFilename()` comparte la convención `Título_mapa.json`, `Título_mapa.png` y `Título_mapa.pdf`, utilizando el mismo saneado de título que el JSON. El PDF sugiere el nombre mediante `document.title` antes de imprimir; `afterprint` restaura el título de la pestaña. La aplicación propone el nombre y el navegador gestiona el diálogo final de guardado.
+- Resumen y CONSEJO están en un `<footer>` al final del área principal.
+- La fila COMPÁS se reduce de 39 a 20 px y sus números se centran en la división correspondiente. PARTES conserva 62 px con el texto centrado. TÓNICA se reduce de 84 a 42 px, con bloques de 35 px y nombres de nota de tamaño uniforme de 12 px; se omiten las etiquetas cuando el bloque no tiene ancho para mostrarlas.
+- La timeline inicia ajustada al ancho, también en una canción nueva. Auto calcula el ancho sin un mínimo de píxeles por compás. El control de zoom permanece habilitado: al moverlo se pasa a zoom manual; Ajustar al ancho permite volver a Auto. El renderizado calcula la timeline después de montar la lista para tener en cuenta la barra de desplazamiento de la página.
+- El editor se contiene dentro de «Orden de las partes», sin desplazar la vista al abrirse ni bloquear la timeline. Esta interacción sustituye al anterior modal fijo que desplazaba la página.
+- El editor crece hacia abajo dentro de la tarjeta, sin limitarse a la altura de la ventana ni añadir un scroll interior. La página conserva su desplazamiento normal.
+
+Validación: 20 comprobaciones en cada viewport de escritorio, 320 × 740 y 740 × 360. Incluyen Auto/zoom manual, compatibilidad de JSON sin artista, persistencia e importación de artista, texto de artista en exportaciones, nombre real del archivo PNG, nombre propuesto de PDF y restauración de título, footer, alturas y tipografía de timeline, posición del modal, timeline visible y ausencia de desbordamiento horizontal.
+
+## Interacción vigente: editor contenido y doble clic
+
+- Clic simple en lista, parte de timeline o tónica: solo selecciona. Doble clic: selecciona y abre el editor. Se conservan los nodos de las partes al seleccionar para que el navegador pueda detectar el doble clic real.
+- Si el editor ya está abierto, cualquier selección en la timeline actualiza su contenido y conserva la apertura. No hay toggle ni cierre por pulsar el fondo.
+- El diálogo está dentro de `.part-editor-layer`, en la tarjeta de Orden, con margen, borde y sombra. Se abre mediante su propiedad `open`, sin `showModal()`, scroll programático, bloqueo del fondo ni ajuste de posición fija.
+- Mientras está abierto se ocultan la lista de filas y las acciones Editar / Mover / Duplicar / Eliminar. El alto previo de la tarjeta se conserva como mínimo para evitar saltos; el editor puede ampliarla hacia abajo.
+- La cabecera, los datos de canción y la timeline conservan sus posiciones. El botón × de cierre tiene tamaño y contraste destacados; Escape también cierra el editor.
+- Se mantienen navegación entre partes, edición de notas, arrastre, flechas y guardado automático. Los cambios pendientes se confirman antes de cambiar la selección o cerrar.
+
+Validación en Chrome: 16 comprobaciones tanto en escritorio como en un viewport de 320 px, incluyendo clic simple/doble, conservación del nodo clicado, apertura sin cambiar el scroll, editor dentro de la tarjeta con márgenes, acciones ocultas/restauradas, selección desde timeline sin cerrar ni hacer toggle, navegación, Escape y ausencia de desbordamiento horizontal. Revisada una captura con cabecera y timeline visibles encima del editor.
+
+## Ajuste de filas y arrastre de partes
+
+- Se restaura el botón Cerrar con el estilo normal de botón pequeño; sustituye al × destacado.
+- En la lista «Orden de las partes» se retira el compás de entrada debajo del número de parte. El número y el indicador ⠿ forman el asa de arrastre.
+- `attachPartDragging()` permite mover una parte antes o después de otra mediante arrastre nativo con ratón. Las líneas de inserción, cancelación y comportamiento son equivalentes al arrastre de notas. Los botones Mover se mantienen como alternativa para móvil y teclado.
+- `reorderPart()` conserva el objeto completo de la parte, sus notas, duraciones e identificadores; selecciona la parte movida y utiliza `mutate()` para actualizar el guardado, timeline, exportaciones y deshacer/rehacer. Soltar en la misma posición no genera historial.
+- Las filas miden 46 px. Duración total y bloques de notas ocupan su altura interior completa y comparten texto de 12 px. Las notas mantienen la escala de 16 px por compás entre todas las filas.
+- El contenedor de notas conserva el desplazamiento horizontal, con la barra visual oculta para igualar las alturas incluso en móvil. El compás de entrada también se retira de las filas de Orden exportadas; el PDF conserva la numeración de su timeline.
+
+Validación en Chrome: 13 comprobaciones en escritorio y viewport de 320 px, incluyendo arrastre arriba/abajo, persistencia, deshacer/rehacer, posición sin cambios, limpieza de indicadores, número y asa, altura común de fila/duración/notas, tamaño de texto, escala proporcional y botón Cerrar.
+
+### Filas de Orden en PNG y PDF
+
+Las exportaciones replican los últimos ajustes de la lista: número de parte sin compás de entrada debajo y encabezado «#». La caja de duración total y los bloques de notas tienen la altura completa de la fila, conservando los márgenes entre filas. El total aumenta a 12 px, igual que las etiquetas de tónica cuando hay ancho suficiente; las duraciones dentro de cada nota se conservan.
+
+Se mantiene la escala común de 16 unidades por compás, los colores, el PNG oscuro 9:16 y el PDF claro con timeline y ajuste a una hoja. Las exportaciones no incluyen asas de arrastre ni controles de edición.
+
+Validación: 11 comprobaciones en Chrome de SVG válido, alturas y alineación de cajas, ausencia del compás de inicio y escala proporcional en ambos temas; generación de PNG de 1080 × 1920 y PDF de una página.

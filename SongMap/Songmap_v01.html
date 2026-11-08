@@ -3,32 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mapa de canción · Editor de estructura</title>
+<title>Songmap v01.00</title>
 <link rel="stylesheet" href="Songmap_v01.css">
 </head>
 <body>
 <div class="app" id="app">
-  <div class="topline"><div class="brand"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>SONGMAP <span style="color:#8390a0;font-weight:500">/ editor</span></span></div><div class="version">Mapa de estructura · v01</div></div>
-  <div class="hero"><div><div class="eyebrow">Mapa de canción</div><h1>Todo el ensayo, en la misma página.</h1><p class="subtitle">Partes, compases y cambios de tónica. Sin notación musical.</p></div><div class="head-actions"><button class="btn" id="btn-undo" title="Deshacer (Ctrl+Z)">↶ Deshacer</button><button class="btn ghost" id="btn-import">Cargar JSON</button><button class="btn ghost" id="btn-export">Guardar JSON</button><button class="btn ghost" id="btn-png">PNG / Compartir</button><button class="btn ghost" id="btn-print">PDF / Imprimir</button></div></div>
+  <header class="topline"><div class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>SONGMAP <span class="version">v01.00</span></span></div><div class="head-actions"><button class="btn" id="btn-undo" title="Deshacer (Ctrl+Z)">↶ Deshacer</button><button class="btn ghost" id="btn-import">Cargar JSON</button><button class="btn ghost" id="btn-export">Guardar JSON</button><button class="btn ghost" id="btn-png">PNG / Compartir</button><button class="btn ghost" id="btn-print">PDF / Imprimir</button></div></header>
   <div class="settings card">
     <div class="field song-field"><label for="song-title">Título de la canción</label><input id="song-title" class="big-input" maxlength="100" autocomplete="off" aria-label="Título de la canción"></div>
+    <div class="field artist-field"><label for="song-artist">Artista</label><input id="song-artist" class="big-input" maxlength="100" autocomplete="off" placeholder="Opcional" aria-label="Artista"></div>
     <div class="field"><label for="song-bpm">Tempo · BPM</label><input id="song-bpm" class="big-input" type="number" min="30" max="300" step="1" aria-label="Tempo BPM"></div>
     <div class="field meter-field"><label>Métrica</label><div class="meter-row"><input id="song-numerator" type="number" min="1" max="16" step="1" title="Tiempos por compás" aria-label="Tiempos por compás"><span>/</span><select id="song-denominator" aria-label="Unidad de tiempo"><option value="4">4</option><option value="8">8</option><option value="2">2</option></select></div></div>
     <div class="field"><label>Proyecto</label><button class="btn" id="btn-new">Nueva canción</button></div>
   </div>
-  <div class="overview-stats" id="stats" aria-live="polite"></div>
   <div class="timeline-card card">
-    <div class="sectionhead"><div><h2>Línea de tiempo</h2><p>Cada división vertical equivale a un compás. Pulsa una parte o una nota para editarla.</p></div><div class="timeline-tools"><button class="btn small" id="btn-fit">Ajustar al ancho</button><div class="zoom-control"><span>Zoom</span><input id="zoom" type="range" min="12" max="95" value="46" step="1" aria-label="Zoom horizontal"><span id="zoom-text" class="zoom-value">46px</span></div></div></div>
+    <div class="sectionhead"><div><h2>Línea de tiempo</h2><p>Cada división vertical equivale a un compás. Un clic selecciona; doble clic edita una parte o nota.</p></div><div class="timeline-tools"><button class="btn small" id="btn-fit">Ajustar al ancho</button><div class="zoom-control"><span>Zoom</span><input id="zoom" type="range" min="12" max="95" value="46" step="1" aria-label="Zoom horizontal"><span id="zoom-text" class="zoom-value">46px</span></div></div></div>
     <div class="track-surface"><div class="track-legend"><div class="legend-top">COMPÁS</div><div class="legend-section">PARTES</div><div class="legend-note">TÓNICA</div></div><div class="scroll-tracks" id="scroll-tracks"><div class="canvas" id="timeline-canvas"><div class="bar-ruler" id="ruler"></div><div class="track-row part-track" id="section-track"></div><div class="track-row note-track" id="note-track"></div></div></div></div>
   </div>
   <div class="workspace">
-    <div class="card part-list"><div class="listhead"><div><h2>Orden de las partes</h2><p id="list-desc">Cada rectángulo mide según sus compases (misma escala en todas las filas).</p></div><button class="btn primary small" id="btn-add-part">+ Añadir parte</button></div><div id="order-map" hidden></div><div id="section-list" class="section-list"></div><div class="part-actions"><p class="part-selection">Parte seleccionada: <strong id="selected-part-name"></strong></p><div class="part-action-buttons"><button class="btn small" id="part-edit">Editar parte</button><button class="btn small" id="part-prev">← Mover</button><button class="btn small" id="part-next">Mover →</button><button class="btn small" id="part-duplicate">Duplicar</button><button class="btn small danger" id="part-delete">Eliminar</button></div></div></div>
-  </div>
-</div>
-<dialog id="editor-modal" class="card editor" aria-labelledby="editor-heading" aria-describedby="editor-summary">
-  <div class="editor-head"><div><span class="overline">Editor de parte</span><h2 id="editor-heading">Selecciona una parte</h2><p class="editor-title" id="editor-summary"></p></div><div class="editor-navigation"><button type="button" class="btn small" id="editor-prev" title="Parte anterior" aria-label="Editar parte anterior">←</button><button type="button" class="btn small" id="editor-next" title="Parte siguiente" aria-label="Editar parte siguiente">→</button><button type="button" class="btn small" id="editor-close">Cerrar</button></div></div>
+    <div class="card part-list"><div class="listhead"><div><h2>Orden de las partes</h2><p id="list-desc">Cada rectángulo mide según sus compases (misma escala en todas las filas).</p></div><button class="btn primary small" id="btn-add-part">+ Añadir parte</button></div><div id="order-map" hidden></div><div id="section-list" class="section-list"></div><div class="part-editor-layer"><dialog id="editor-modal" class="card editor" aria-labelledby="editor-heading" aria-describedby="editor-summary">
+  <div class="editor-head"><div><span class="overline">Editor de parte</span><h2 id="editor-heading">Selecciona una parte</h2><p class="editor-title" id="editor-summary"></p></div><div class="editor-navigation"><button type="button" class="btn small" id="editor-prev" title="Parte anterior" aria-label="Editar parte anterior">←</button><button type="button" class="btn small" id="editor-next" title="Parte siguiente" aria-label="Editar parte siguiente">→</button><button type="button" class="btn small" id="editor-close" aria-label="Cerrar editor">Cerrar</button></div></div>
   <div class="editor-body" id="editor-body"></div>
-</dialog>
+</dialog></div><div class="part-actions"><p class="part-selection">Parte seleccionada: <strong id="selected-part-name"></strong></p><div class="part-action-buttons"><button class="btn small" id="part-edit">Editar parte</button><button class="btn small" id="part-prev">← Mover</button><button class="btn small" id="part-next">Mover →</button><button class="btn small" id="part-duplicate">Duplicar</button><button class="btn small danger" id="part-delete">Eliminar</button></div></div></div>
+  </div>
+  <footer class="overview-stats" id="stats" aria-live="polite"></footer>
+</div>
+
 <div id="print-view"></div>
 <div class="dialog-backdrop" id="png-dialog" role="dialog" aria-modal="true" aria-labelledby="png-heading" aria-describedby="png-status">
   <div class="dialog png-dialog">
