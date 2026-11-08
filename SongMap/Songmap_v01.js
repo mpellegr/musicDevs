@@ -69,7 +69,72 @@ const r=item.getBoundingClientRect();if(r.bottom>window.innerHeight-50||r.top<0)
 }}}
 function renderAll(){ensureSelection();renderTop();renderTimeline();renderList();renderEditor();el('print-view').innerHTML=printMarkup()}
 function formattedStart(beatOffset){let bar=Math.floor(beatOffset/state.numerator)+1,rem=beatOffset%state.numerator;return `${bar}${rem?' (tiempo '+(rem+1)+')':''}`}
-function printMarkup(){let offset=0;const rows=state.sections.map((s,i)=>{let start=offset;offset+=sectionBeats(s);return `<tr><td>${i+1}</td><td><b>${htmlSafe(s.name)}</b>${s.detail?`<div style="color:#666;font-size:9pt">${htmlSafe(s.detail)}</div>`:''}</td><td>${formattedStart(start)}</td><td>${durationMarkup(sectionBeats(s))}</td><td>${s.notes.map(no=>`<span class="ptone" style="background:${pitchColor(no.pitch)}">${no.pitch} ${durationMarkup(no.beats)}</span>`).join('')}</td></tr>`}).join('');return `<h1>${htmlSafe(state.title)}</h1><p class="print-meta">${state.bpm} BPM · ${state.numerator}/${state.denominator} · ${durationMarkup(songBeats())} compases · duración aprox. ${timeString(songLengthSeconds())}</p><table><thead><tr><th>#</th><th>Parte</th><th>Desde compás</th><th>Duración</th><th>Tónicas y cambios</th></tr></thead><tbody>${rows}</tbody></table><p class="printfoot">Tónica indicada, no acordes por instrumento. Mismo color para nota natural y sostenida.</p>`}
+// Una única ilustración vectorial permite ajustar toda la canción a una hoja.
+function printMarkup(){
+  const wrap=(value,limit)=>{
+    const lines=[];
+    let line='';
+    for(const word of String(value).split(/\s+/)){
+      if(line && line.length+word.length+1>limit){lines.push(line);line=''}
+      for(let at=0;at<word.length;at+=limit){
+        const chunk=word.slice(at,at+limit);
+        if(at){if(line)lines.push(line);line=chunk}
+        else line+=(line?' ':'')+chunk;
+      }
+    }
+    if(line)lines.push(line);
+    return lines.length?lines:[''];
+  };
+  const text=(x,y,value,size=12,fill='#ebf2fb',extra='')=>`<text x="${x}" y="${y}" font-size="${size}" fill="${fill}" ${extra}>${htmlSafe(value)}</text>`;
+  const unit=16, gap=2, notesX=300;
+  const width=Math.max(760,...state.sections.map(s=>notesX+sectionBeats(s)/state.numerator*unit+(s.notes.length-1)*gap+16));
+  const titleLines=wrap(state.title,60);
+  let y=30;
+  let content=titleLines.map(line=>{const markup=text(0,y,line,24,'#172331','font-weight="700"');y+=29;return markup}).join('');
+  content+=text(0,y+3,`${state.bpm} BPM · ${state.numerator}/${state.denominator} · ${shortDuration(songBeats())} compases · ${timeString(songLengthSeconds())} aprox.`,13,'#536176');
+  y+=39;
+  content+=text(0,y,'ORDEN DE LAS PARTES',14,'#172331','font-weight="700"');
+  y+=23;
+  content+=text(12,y,'# / INICIO',10,'#536176')+text(65,y,'PARTE',10,'#536176')+text(247,y,'COMP.',10,'#536176')+text(notesX,y,'TÓNICAS · COMPASES',10,'#536176');
+  y+=12;
+  let offset=0;
+  for(const [index,s] of state.sections.entries()){
+    const names=wrap(s.name,23), details=s.detail?wrap(s.detail,28):[];
+    const rowHeight=Math.max(58,18+names.length*15+details.length*12);
+    const center=y+rowHeight/2;
+    content+=`<rect x="0" y="${y}" width="${width}" height="${rowHeight-3}" rx="8" fill="${index%2?'#202a38':'#151b26'}"/>`;
+    content+=text(12,center-2,String(index+1).padStart(2,'0'),12,'#c3cddb');
+    content+=text(12,center+13,formattedStart(offset),9,'#8e9bab');
+    let nameY=y+20;
+    for(const line of names){content+=text(65,nameY,line,12,'#f2f5fa','font-weight="700"');nameY+=15}
+    for(const line of details){content+=text(65,nameY,line,10,'#a8b5c5');nameY+=12}
+    const total=shortDuration(sectionBeats(s));
+    content+=`<rect x="243" y="${center-11}" width="45" height="22" rx="5" fill="#0d1119"/>`;
+    content+=text(265.5,center+4,total,Math.min(11,65/total.length),'#ebf2fb','text-anchor="middle"');
+    let x=notesX;
+    for(const note of s.notes){
+      const w=note.beats/state.numerator*unit, duration=shortDuration(note.beats);
+      const badgeWidth=Math.min(Math.max(0.5,w-1),Math.max(24,duration.length*6+8));
+      content+=`<rect x="${x}" y="${center-21}" width="${w}" height="42" rx="3" fill="${pitchColor(note.pitch)}"/>`;
+      content+=text(x+w/2,center-5,note.pitch,Math.min(13,(w-1)/note.pitch.length),'#172331','text-anchor="middle" font-weight="700"');
+      content+=`<rect x="${x+(w-badgeWidth)/2}" y="${center}" width="${badgeWidth}" height="16" rx="3" fill="#0d1119"/>`;
+      content+=text(x+w/2,center+11,duration,Math.max(0.2,Math.min(10,(badgeWidth-0.5)/duration.length)),'#ebf2fb','text-anchor="middle"');
+      x+=w+gap;
+    }
+    offset+=sectionBeats(s);
+    y+=rowHeight;
+  }
+  y+=19;
+  content+=text(0,y,'Misma escala de duración en todas las filas · Tónica general, no acordes por instrumento.',11,'#536176');
+  y+=22;
+  for(const [index,root] of ROOTS.entries()){
+    const x=index*46;
+    content+=`<rect x="${x}" y="${y-13}" width="34" height="20" rx="4" fill="${NOTE_COLORS[root]}"/>`;
+    content+=text(x+17,y+1,root,11,'#172331','text-anchor="middle" font-weight="700"');
+  }
+  content+=text(335,y+1,'# comparte color con su nota natural',11,'#536176');
+  return `<svg xmlns="http://www.w3.org/2000/svg" class="print-song" viewBox="0 0 ${width} ${y+18}" preserveAspectRatio="xMidYMin meet" role="img" aria-label="${htmlSafe(state.title)}: orden de las partes" font-family="Arial, sans-serif"><title>${htmlSafe(state.title)} · Orden de las partes</title>${content}</svg>`;
+}
 function plainSummary(){let beat=0;const lines=[state.title,`${state.bpm} BPM · ${state.numerator}/${state.denominator} · ${shortDuration(songBeats())} compases · aprox. ${timeString(songLengthSeconds())}`,''];for(const s of state.sections){const start=formattedStart(beat);lines.push(`[${start}] ${s.name.toUpperCase()} — ${readableDuration(sectionBeats(s))} — ${s.notes.map(t=>t.pitch+' ('+readableDuration(t.beats)+')').join(' → ')}`+(s.detail?` · ${s.detail}`:''));beat+=sectionBeats(s)}return lines.join('\n')}
 function downloadBlob(blob,filename){const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
 function safeFilename(name){return name.trim().replace(/[^a-zA-Z0-9À-ÿ_-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,70)||'cancion'}
@@ -79,5 +144,6 @@ el('btn-export').onclick=()=>{const data=JSON.stringify(state,null,2);downloadBl
 el('btn-copy').onclick=()=>{let text=plainSummary();if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(()=>toast('Resumen copiado al portapapeles')).catch(()=>copyFallback(text))}else copyFallback(text)};
 document.addEventListener('keydown',e=>{let ctrl=e.ctrlKey||e.metaKey;if(ctrl&&e.key.toLowerCase()==='z'&&!e.altKey){const tag=document.activeElement?.tagName;if(['INPUT','TEXTAREA'].includes(tag))return;e.preventDefault();e.shiftKey?redo():undo()}if(e.key==='Escape')closeDialog()});}
 function copyFallback(value){const textarea=document.createElement('textarea');textarea.value=value;textarea.style.position='fixed';textarea.style.left='-9999px';document.body.appendChild(textarea);textarea.select();try{document.execCommand('copy');toast('Resumen copiado al portapapeles')}catch(e){toast('No se pudo copiar; usa Guardar JSON o Imprimir')}textarea.remove()}
+window.addEventListener('beforeprint',()=>{el('print-view').innerHTML=printMarkup()});
 attach();renderAll();
 })();

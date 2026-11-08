@@ -1171,73 +1171,41 @@ button:disabled {
 
 }
 
-/* Estilos de impresión */
+/* Impresión: un único SVG escalable dentro de un A4 vertical. */
+@page {
+  size: A4 portrait;
+  margin: 10mm;
+}
+
 @media print {
+  html,
   body {
+    margin: 0;
+    padding: 0;
     background: #fff;
-    color: #111;
   }
 
-  .app {
-    display: none;
+  body > :not(#print-view) {
+    display: none !important;
   }
 
   #print-view {
     display: block;
-    margin: 15mm;
-    font-family: Arial,sans-serif;
-  }
-
-  #print-view h1 {
-    font-size: 22pt;
-    margin: 0 0 5mm;
-  }
-
-  #print-view .print-meta {
-    color: #555;
-    font-size: 11pt;
-    margin-bottom: 7mm;
-  }
-
-  #print-view table {
-    border-collapse: collapse;
-    width: 100%;
-    font-size: 11pt;
-  }
-
-  #print-view td,#print-view th {
-    border-bottom: 1px solid #bbb;
-    padding: 7px;
-    text-align: left;
-  }
-
-  #print-view th {
-    background: #eee;
-  }
-
-  #print-view .ptone {
-    display: inline-block;
-    border-radius: 5px;
-    padding: 5px 8px;
-    margin: 1px;
-    color: #142334;
-    font-weight: bold;
+    width: 190mm;
+    height: 276mm;
+    margin: 0;
+    padding: 0;
     break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
-  #print-view .printfoot {
-    margin-top: 10mm;
-    color: #666;
-    font-size: 9pt;
+  #print-view .print-song {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
-
-  @page {
-    size: A4 landscape;
-    margin: 12mm;
-  }
-
 }
-
 /* Mapa horizontal de orden de partes */
 .order-scroll {
   overflow-x: auto;
@@ -1316,14 +1284,4 @@ button:disabled {
   pointer-events: none;
   background: repeating-linear-gradient(to right,transparent 0,transparent calc(var(--unit) - 1px),#ffffff20 calc(var(--unit) - 1px),#ffffff20 var(--unit));
   background-size: 100% 100%;
-}
-
-@media print {
-  #print-view .bar-duration {
-    border: 1px solid #a8b5c5;
-    background-color: #ebf2fb;
-    color: #0d1119;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
 }

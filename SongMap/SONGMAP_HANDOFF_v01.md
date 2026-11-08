@@ -159,7 +159,7 @@ El contenedor `order-map` está oculto mediante `hidden` en el HTML. El código 
 - En **PARTES de la timeline**, el nombre va arriba y la caja de duración debajo, al 100 % del ancho interior disponible del bloque, respetando su relleno lateral.
 - En **TÓNICA de la timeline**, solo se muestra la nota cuando hay espacio; no se muestra una caja ni texto de duración. La duración sigue disponible en la ayuda al pasar el cursor y en la etiqueta accesible.
 - En **STAT**, el total de compases se presenta como número destacado sin caja, junto a la etiqueta «compases».
-- La lista «Orden de las partes» y el resumen del editor mantienen las cajas de duración. La impresión también las utiliza, con una adaptación clara y borde para facilitar su lectura en papel.
+- La lista «Orden de las partes» y el resumen del editor mantienen las cajas de duración. La impresión usa una composición vectorial específica, descrita en la sección de impresión de esta revisión.
 - Las ayudas y el resumen copiado usan texto como `08 comp. + 2 t.`. Los corchetes del resumen copiado identifican el compás de entrada, no la duración.
 
 ### Legibilidad del CSS
@@ -169,3 +169,16 @@ El contenedor `order-map` está oculto mediante `hidden` en el HTML. El código 
 ### Validación de esta revisión
 
 Se ha revisado el diff y ejecutado `git diff --check`. La escala proporcional de la lista, la paleta, el formato JSON y la clave de almacenamiento no cambian. No se ha ejecutado una prueba de interfaz en navegador ni una comprobación de sintaxis con Node, que no está disponible en el entorno utilizado.
+
+## Impresión del orden de partes — 8 de noviembre de 2026
+
+- `printMarkup()` genera un SVG con título, BPM, métrica, duración total, lista de partes y leyenda de colores. Sustituye la tabla de impresión anterior.
+- Cada fila muestra número de orden, compás de entrada, nombre, indicaciones opcionales, duración total y bloques de tónica. Dentro de cada bloque aparecen la nota y su duración en una caja sin corchetes, con al menos dos dígitos.
+- Las notas comparten una escala de 16 unidades por compás en todas las filas; no se normaliza cada fila por separado. El área vectorial crece según la parte más larga, sin cortar bloques.
+- La composición conserva filas oscuras y notas con la paleta fija del editor. La hoja es blanca para facilitar la impresión.
+- CSS configura A4 vertical con márgenes de 10 mm. El SVG ocupa un área de 190 × 276 mm y escala toda la composición uniformemente dentro de ella, sin fragmentarla en varias páginas.
+- La impresión se actualiza con el botón y con el evento `beforeprint`, por lo que también funciona con el comando de impresión del navegador.
+- Para exportar se utiliza «Imprimir → Guardar como PDF». No se ha añadido exportación PNG.
+- Ajustar todo a una hoja implica reducir el tamaño de lectura cuando hay muchas partes o duraciones excepcionalmente largas. Las opciones de papel, escala y márgenes que fuerce el usuario en el diálogo del navegador pueden alterar la salida.
+
+Validación: Chrome en modo headless ha generado un PDF de una página con la canción de ejemplo y otro de una página con 250 partes. Se ha validado el XML del SVG generado y revisado una captura de la composición de impresión. `git diff --check` sin errores.
