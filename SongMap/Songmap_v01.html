@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa de canción · Editor de estructura</title>
+<link rel="stylesheet" href="Songmap_v01.css">
+</head>
+<body>
+<div class="app" id="app">
+  <div class="topline"><div class="brand"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>SONGMAP <span style="color:#8390a0;font-weight:500">/ editor</span></span></div><div class="version">Mapa de estructura · v01</div></div>
+  <div class="hero"><div><div class="eyebrow">Mapa de canción</div><h1>Todo el ensayo, en la misma página.</h1><p class="subtitle">Partes, compases y cambios de tónica. Sin notación musical.</p></div><div class="head-actions"><button class="btn" id="btn-undo" title="Deshacer (Ctrl+Z)">↶ Deshacer</button><button class="btn ghost" id="btn-import">Cargar JSON</button><button class="btn ghost" id="btn-export">Guardar JSON</button><button class="btn ghost" id="btn-print">Imprimir</button></div></div>
+  <div class="settings card">
+    <div class="field song-field"><label for="song-title">Título de la canción</label><input id="song-title" class="big-input" maxlength="100" autocomplete="off" aria-label="Título de la canción"></div>
+    <div class="field"><label for="song-bpm">Tempo · BPM</label><input id="song-bpm" class="big-input" type="number" min="30" max="300" step="1" aria-label="Tempo BPM"></div>
+    <div class="field meter-field"><label>Métrica</label><div class="meter-row"><input id="song-numerator" type="number" min="1" max="16" step="1" title="Tiempos por compás" aria-label="Tiempos por compás"><span>/</span><select id="song-denominator" aria-label="Unidad de tiempo"><option value="4">4</option><option value="8">8</option><option value="2">2</option></select></div></div>
+    <div class="field"><label>Proyecto</label><button class="btn" id="btn-new">Nueva canción</button></div>
+  </div>
+  <div class="overview-stats" id="stats" aria-live="polite"></div>
+  <div class="timeline-card card">
+    <div class="sectionhead"><div><h2>Línea de tiempo</h2><p>Cada división vertical equivale a un compás. Pulsa una parte o una nota para editarla.</p></div><div class="timeline-tools"><button class="btn small" id="btn-fit">Ajustar al ancho</button><div class="zoom-control"><span>Zoom</span><input id="zoom" type="range" min="12" max="95" value="46" step="1" aria-label="Zoom horizontal"><span id="zoom-text" class="zoom-value">46px</span></div></div></div>
+    <div class="track-surface"><div class="track-legend"><div class="legend-top">COMPÁS</div><div class="legend-section">PARTES</div><div class="legend-note">TÓNICA</div></div><div class="scroll-tracks" id="scroll-tracks"><div class="canvas" id="timeline-canvas"><div class="bar-ruler" id="ruler"></div><div class="track-row part-track" id="section-track"></div><div class="track-row note-track" id="note-track"></div></div></div></div>
+    <div class="timeline-help"><div class="color-legend" id="palette"><span>7 notas · 7 colores:</span></div><span class="help-right">El sostenido <b>#</b> mantiene el color de la nota.</span></div>
+  </div>
+  <div class="workspace">
+    <div class="card part-list"><div class="listhead"><div><h2>Orden de las partes</h2><p id="list-desc">Cada rectángulo mide según sus compases (misma escala en todas las filas).</p></div><button class="btn primary small" id="btn-add-part">+ Añadir parte</button></div><div id="order-map" hidden></div><div id="section-list" class="section-list"></div></div>
+    <div class="card editor"><div class="editor-head"><div><span class="overline">Editor de parte</span><h2 id="editor-heading">Selecciona una parte</h2><p class="editor-title" id="editor-summary"></p></div><span class="inline-label" id="editor-tag">EDITABLE</span></div><div class="editor-body" id="editor-body"></div></div>
+  </div>
+  <div class="footer"><b>CONSEJO</b> Duplica un verso para crear una variación y modifica únicamente la duración de sus notas. <button class="btn small flat" id="btn-copy">Copiar resumen para la banda ↗</button></div>
+</div>
+<div id="print-view"></div>
+<input type="file" id="import-file" accept=".json,application/json" hidden>
+<div class="dialog-backdrop" id="dialog-backdrop" role="dialog" aria-modal="true" aria-label="Confirmar acción"><div class="dialog"><h3 id="dialog-title">Confirmar</h3><p id="dialog-text"></p><div class="dialog-actions"><button class="btn" id="dialog-cancel">Cancelar</button><button class="btn primary" id="dialog-confirm">Continuar</button></div></div></div>
+<div class="toast" id="toast" role="status"></div>
+<script src="Songmap_v01.js"></script>
+</body></html>
