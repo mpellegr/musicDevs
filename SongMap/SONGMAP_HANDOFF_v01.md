@@ -91,6 +91,9 @@ En 4/4, este ejemplo suma 8 compases: A durante 6 y C# durante 2. Los identifica
 - `sample()` / `fresh()`: estado inicial de ejemplo y canción nueva.
 - `validState()`: validación al importar JSON.
 - `sectionBeats()` / `songBeats()`: duraciones.
+- `shortDuration()`: compases con al menos dos dígitos y tiempos adicionales en formato compacto.
+- `readableDuration()`: duración textual para ayudas, accesibilidad y resumen copiado.
+- `durationMarkup()`: caja común de duración, con clase `bar-duration`.
 - `renderTimeline()`: línea de tiempo principal.
 - `renderList()`: lista vertical; **aquí está la lógica proporcional de v00_02**.
 - `renderEditor()`: controles de edición de partes y tónicas.
@@ -117,7 +120,9 @@ Estas posibilidades **no son requisitos cerrados de la versión actual**. No int
 
 ## Archivos para el traspaso
 
-- `Songmap_v01.html` — aplicación ejecutable y código fuente actual.
+- `Songmap_v01.html` — estructura y punto de entrada de la aplicación.
+- `Songmap_v01.css` — estilos, formateados con sangría, una propiedad por línea y comentarios de sección.
+- `Songmap_v01.js` — lógica y renderizado de la aplicación.
 - `SONGMAP_HANDOFF_v01.md` — este documento de contexto y decisiones.
 
 ## Reorganización v01
@@ -141,6 +146,26 @@ La versión de la aplicación es independiente del formato JSON: `version: 1` y 
 
 Los HTML históricos se conservan íntegros, incluyendo sus etiquetas de versión originales. La documentación histórica adapta las referencias a la nueva convención.
 
-### Discrepancia heredada pendiente
+### Código heredado del mapa horizontal
 
-Aunque el requisito indica que no debe añadirse una minilínea de tiempo independiente, v00_02 contiene `order-map` y su renderizado. La separación v01 conserva ese comportamiento; queda pendiente conciliar la interfaz con el requisito. La escala común de 16 px por compás en los rectángulos de la lista también se conserva.
+El contenedor `order-map` está oculto mediante `hidden` en el HTML. El código heredado sigue generando sus bloques y conserva sus estilos; no debe mostrarse como una minilínea de tiempo adicional. La escala común de 16 px por compás en los rectángulos de la lista se conserva.
+## Ajustes visuales de v01 — 8 de noviembre de 2026
+
+### Duraciones de compases
+
+- Los compases se muestran con al menos dos dígitos: `04`, `08`, `16`, `100`. El cero inicial es solo presentación; no cambia los datos ni los campos numéricos de edición.
+- Las duraciones visuales usan una caja sin corchetes, generada por `durationMarkup()`. Los tiempos adicionales se conservan: por ejemplo, `08+2/4` en una métrica de 4/4.
+- El estilo compartido está en `.bar-duration, .part-duration`: fondo oscuro `#0d1119`, texto claro `#ebf2fb`, tamaño de 10 px, peso 400, relleno de 5 px y esquinas de 5 px. Estos valores incorporan los ajustes manuales del usuario.
+- En **PARTES de la timeline**, el nombre va arriba y la caja de duración debajo, al 100 % del ancho interior disponible del bloque, respetando su relleno lateral.
+- En **TÓNICA de la timeline**, solo se muestra la nota cuando hay espacio; no se muestra una caja ni texto de duración. La duración sigue disponible en la ayuda al pasar el cursor y en la etiqueta accesible.
+- En **STAT**, el total de compases se presenta como número destacado sin caja, junto a la etiqueta «compases».
+- La lista «Orden de las partes» y el resumen del editor mantienen las cajas de duración. La impresión también las utiliza, con una adaptación clara y borde para facilitar su lectura en papel.
+- Las ayudas y el resumen copiado usan texto como `08 comp. + 2 t.`. Los corchetes del resumen copiado identifican el compás de entrada, no la duración.
+
+### Legibilidad del CSS
+
+`Songmap_v01.css` está organizado con sangría de dos espacios, una declaración por línea, reglas separadas y comentarios de sección. Se mantiene el orden de las reglas para preservar la cascada. Los ajustes visuales posteriores se aplican sobre esta versión legible.
+
+### Validación de esta revisión
+
+Se ha revisado el diff y ejecutado `git diff --check`. La escala proporcional de la lista, la paleta, el formato JSON y la clave de almacenamiento no cambian. No se ha ejecutado una prueba de interfaz en navegador ni una comprobación de sintaxis con Node, que no está disponible en el entorno utilizado.
