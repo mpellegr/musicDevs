@@ -288,3 +288,7 @@ Las exportaciones replican los últimos ajustes de la lista: número de parte si
 Se mantiene la escala común de 16 unidades por compás, los colores, el PNG oscuro 9:16 y el PDF claro con timeline y ajuste a una hoja. Las exportaciones no incluyen asas de arrastre ni controles de edición.
 
 Validación: 11 comprobaciones en Chrome de SVG válido, alturas y alineación de cajas, ausencia del compás de inicio y escala proporcional en ambos temas; generación de PNG de 1080 × 1920 y PDF de una página.
+
+### Editor cubriendo toda la cabecera de Orden
+
+Mientras el editor está abierto se oculta también `.listhead`, incluido «Añadir parte». El editor comienza en la parte superior de la tarjeta, con un padding exterior uniforme de 12 px en los cuatro lados (6 px en móvil), por lo que gana ancho respecto a la disposición anterior. Al cerrar se recuperan cabecera, lista y acciones. La timeline permanece fuera de esta tarjeta y sigue visible e interactiva.

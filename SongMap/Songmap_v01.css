@@ -1439,7 +1439,7 @@ button:disabled {
 /* Editor contenido únicamente en Orden de las partes. */
 .part-editor-layer {
   display: none;
-  padding: 16px 24px 24px;
+  padding: 12px;
   background: #0d111966;
 }
 
@@ -1447,6 +1447,7 @@ button:disabled {
   display: block;
 }
 
+.part-list:has(.editor[open]) .listhead,
 .part-list:has(.editor[open]) #section-list,
 .part-list:has(.editor[open]) .part-actions {
   display: none;
@@ -1454,7 +1455,7 @@ button:disabled {
 
 @media (max-width: 650px) {
   .part-editor-layer {
-    padding: 10px 6px 14px;
+    padding: 6px;
   }
 
   .editor .editor-head,
